@@ -1,70 +1,73 @@
 import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
+import OcrUpload from "./components/OcrUpload";
+import RecipeList from "./components/RecipeList";
+import RecipeDetail from "./components/RecipeDetail";
+import type { View } from "./types";
 import "./App.css";
 
-const usCities = [
-  "New York, NY", "Los Angeles, CA", "Chicago, IL", "Houston, TX", "Phoenix, AZ",
-  "Philadelphia, PA", "San Antonio, TX", "San Diego, CA", "Dallas, TX", "San Jose, CA",
-  "Austin, TX", "Jacksonville, FL", "Fort Worth, TX", "Columbus, OH", "Charlotte, NC",
-  "San Francisco, CA", "Indianapolis, IN", "Seattle, WA", "Denver, CO", "Boston, MA"
-];
-
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
-  const [selectedCity, setSelectedCity] = useState("");
+  const [view, setView] = useState<View>("scan");
+  const [selectedRecipeId, setSelectedRecipeId] = useState<number | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
+  function handleRecipeSaved() {
+    setRefreshKey((k) => k + 1);
+    setView("recipes");
+  }
+
+  function handleSelectRecipe(id: number) {
+    setSelectedRecipeId(id);
+    setView("detail");
+  }
+
+  function handleBack() {
+    setView("recipes");
+    setSelectedRecipeId(null);
+  }
+
+  function handleDeleted() {
+    setRefreshKey((k) => k + 1);
+    setView("recipes");
+    setSelectedRecipeId(null);
   }
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <div className="row">
-        <select
-          value={selectedCity}
-          onChange={(e) => setSelectedCity(e.target.value)}
+    <div className="app">
+      <nav className="nav-bar">
+        <button
+          className={view === "scan" ? "nav-active" : ""}
+          onClick={() => setView("scan")}
         >
-          <option value="">Select a city...</option>
-          {usCities.map((city) => (
-            <option key={city} value={city}>{city}</option>
-          ))}
-        </select>
-      </div>
+          Scan Recipe
+        </button>
+        <button
+          className={view === "recipes" || view === "detail" ? "nav-active" : ""}
+          onClick={() => {
+            setView("recipes");
+            setSelectedRecipeId(null);
+          }}
+        >
+          My Recipes
+        </button>
+      </nav>
 
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
+      <main className="container">
+        {view === "scan" && <OcrUpload onRecipeSaved={handleRecipeSaved} />}
+        {view === "recipes" && (
+          <RecipeList
+            onSelectRecipe={handleSelectRecipe}
+            refreshKey={refreshKey}
+          />
+        )}
+        {view === "detail" && selectedRecipeId !== null && (
+          <RecipeDetail
+            recipeId={selectedRecipeId}
+            onBack={handleBack}
+            onDeleted={handleDeleted}
+          />
+        )}
+      </main>
+    </div>
   );
 }
 
