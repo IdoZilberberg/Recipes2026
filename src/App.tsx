@@ -1,6 +1,5 @@
 import { useState } from "react";
 import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
 
 const usCities = [
@@ -11,13 +10,11 @@ const usCities = [
 ];
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
   const [name, setName] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
+  function greet() {
+    alert(`Hello, ${name}! You selected: ${selectedCity}`);
   }
 
   return (
@@ -63,7 +60,6 @@ function App() {
         />
         <button type="submit">Greet</button>
       </form>
-      <p>{greetMsg}</p>
     </main>
   );
 }
